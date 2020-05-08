@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Which is the tallest mountain in the world?",
+    "answer": "Mt.Everest",
+    "options": [
+      "Mt.Everest",
+      "K2",
+      "Annapurna",
+      "Dhaulagiri"
+    ]
+  },
+  {
+    "question": "Who was the first man to fly around the earth with a spaceship?",
+    "answer": "Gagarin",
+    "options": [
+      "Armstrong",
+      "Gagarin",
+      "Prachanda",
+      "Trump"
+    ]
+  },
+  {
+    "question": "In which country were the first Olympic Games held?",
+    "answer": "Greece",
+    "options": [
+      "Rome",
+      "Italy",
+      "Greece",
+      "Britian"
+    ]
+  },
+  {
+    "question": "Which football club has the most UCL wins?",
+    "answer": "Real Madrid",
+    "options": [
+      "Barcelona",
+      "Liverpool",
+      "Real Madrid",
+      "AC Milan"
+    ]
+  }
+]
