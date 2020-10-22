@@ -1,10 +1,10 @@
+import 'package:deQUIZ/quiz_brain.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'questionBank.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:audioplayers/audio_cache.dart';
 
-QuizBrain quizBrain = QuizBrain();
+import 'models/question_model.dart';
 
 void main() => runApp(Quizzler());
 
@@ -43,50 +43,80 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  int next = 0;
-  String answer;
+  List<QuestionModel> questionModels = [];
+  List<Widget> scoreKeeper = [];
+  int questionNumber = 0;
+  int score = 0;
 
-  void correct(String answer) {
-    setState(() {
-      if (quizBrain.isFinished() == true) {
-        Alert(
-          context: context,
-          title: 'Finished!',
-          desc: "You scored ${quizBrain.returnScore()}/18!",
-        ).show();
-        quizBrain.reset();
+  final player = AudioCache();
 
-        scoreKeeper = [];
-      } else {
-        if (answer == quizBrain.getCorrectAnswer()) {
-          final player = AudioCache();
-          player.play('2.wav');
-          scoreKeeper.add(
-            Icon(
-              Icons.check,
-              color: Colors.green,
-            ),
-          );
-          quizBrain.increaseScore();
-        } else {
-          final player = AudioCache();
-          player.play('3.wav');
-          scoreKeeper.add(
-            Icon(
-              Icons.close,
-              color: Colors.red,
-            ),
-          );
-        }
-        quizBrain.changeQuestion();
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+
+    // Initializes the questions asynchronously
+    _initQuestions();
   }
 
-  List<Icon> scoreKeeper = [];
+  @override
+  void dispose() {
+    questionModels.clear();
+    scoreKeeper.clear();
+    super.dispose();
+  }
+
+  Future<void> _initQuestions() async {
+    questionModels = await getQuestions();
+
+    // Updates the UI once initialization completes
+    setState(() {});
+  }
+
+  void reset() {
+    scoreKeeper.clear();
+    questionNumber = 0;
+    score = 0;
+  }
+
+  Future<void> checkOption(String option) async {
+    if (option == questionModels[questionNumber].answer) {
+      player.play('2.wav');
+      scoreKeeper.add(
+        Icon(
+          Icons.check,
+          color: Colors.green,
+        ),
+      );
+      score++;
+    } else {
+      final player = AudioCache();
+      player.play('3.wav');
+      scoreKeeper.add(
+        Icon(
+          Icons.close,
+          color: Colors.red,
+        ),
+      );
+    }
+    questionNumber++;
+    if (questionModels.length == questionNumber) {
+      await Alert(
+        context: context,
+        title: 'Finished!',
+        desc: 'You scored $score/${questionModels.length}!',
+      ).show();
+      reset();
+    }
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (questionModels.isEmpty) {
+      return Container();
+    }
+
+    final questionModel = questionModels[questionNumber];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -96,7 +126,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                quizBrain.getQuestion(),
+                questionModel.question,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -108,85 +138,29 @@ class _QuizPageState extends State<QuizPage> {
         ),
         Spacer(),
         Expanded(
-          child: Column(
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      child: FlatButton(
-                        color: Colors.indigo.shade600,
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        onPressed: () {
-                          correct(quizBrain.getOption1());
-                        },
-                        child: Text(
-                          quizBrain.getOption1(),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      child: FlatButton(
-                        color: Colors.indigo.shade600,
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        onPressed: () {
-                          correct(quizBrain.getOption2());
-                        },
-                        child: Text(
-                          quizBrain.getOption2(),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      child: FlatButton(
-                        color: Colors.indigo.shade600,
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        onPressed: () {
-                          correct(quizBrain.getOption3());
-                        },
-                        child: Text(
-                          quizBrain.getOption3(),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      child: FlatButton(
-                        color: Colors.indigo.shade600,
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        onPressed: () {
-                          correct(quizBrain.getOption4());
-                        },
-                        child: Text(
-                          quizBrain.getOption4(),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          child: GridView.builder(
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 3 / 1,
+              mainAxisSpacing: 10.0,
+              crossAxisSpacing: 10.0,
+            ),
+            itemCount: questionModel.options.length,
+            itemBuilder: (context, index) {
+              final option = questionModel.options[index];
+              return FlatButton(
+                color: Colors.indigo.shade600,
+                padding: EdgeInsets.symmetric(vertical: 10),
+                onPressed: () {
+                  checkOption(option);
+                },
+                child: Text(
+                  option,
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              );
+            },
           ),
         ),
         Wrap(

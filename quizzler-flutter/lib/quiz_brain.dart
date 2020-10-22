@@ -1,5 +1,27 @@
-import 'question.dart';
+import 'dart:convert';
 
+import 'package:flutter/services.dart';
+
+import 'models/question_model.dart';
+
+Future<List<QuestionModel>> getQuestions() async {
+  // We're reading from file [asset] here. Which is I/O operations and takes some time to complete.
+  // So we're using calling everything asynchronously. And awaiting the read from file to complete.
+  final questionsJson = await rootBundle.loadString('assets/json/questions.json');
+
+  // Since 'questionsJson` is a string, we can't perform much operations on it.
+  // So, we're converting it to Dart's object.
+  //
+  // i.e. we're converting JSONArray into Dart's List.
+  final List<dynamic> rawQuestions = jsonDecode(questionsJson);
+
+  // Here we're converting List<dynamic> into List<QuestionModel>
+  // Reason: dynamic is not a strong time so we can't perform much operations on it.
+  // So, we're modeling the data into our own data type [Model], which is [QuestionModel].
+  return rawQuestions.map((questionMap) => QuestionModel.fromMap(questionMap)).toList();
+}
+
+/*
 class QuizBrain {
   int _questionNumber = 0;
   int _userScore = 0;
@@ -121,4 +143,4 @@ class QuizBrain {
   int returnScore() {
     return _userScore;
   }
-}
+}*/
